@@ -1,12 +1,15 @@
 import React from "react";
 import Sidebar from "../components/ui/Sidebar";
+import { useNavigate } from "react-router-dom";
 
 const Home = () => {
+  const navigate = useNavigate();
   return (
     <div className="bg-neutral-900 h-dvh w-dvw flex flex-row text-white">
       <Sidebar />
       <div className="flex flex-row gap-5 p-4 flex-wrap">
-        <div className="flex flex-col gap-2 w-80 h-70 bg-neutral-800 rounded-2xl cursor-pointer border border-neutral-800">
+
+        <div onClick={() => navigate('/chat')} className="flex flex-col gap-2 w-80 h-70 bg-neutral-800 rounded-2xl cursor-pointer border border-neutral-800">
           <div className=" w-full h-1/2 overflow-hidden rounded-2xl">
             <img
               src="https://omcropscience.com/wp-content/uploads/2023/05/Career.jpg"

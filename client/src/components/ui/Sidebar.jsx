@@ -5,28 +5,28 @@ const Sidebar = () => {
   return (
     <div className="bg-neutral-950 h-dvh w-1/6 p-2 flex flex-col text-white">
       <div className=" font-medium text-2xl p-2 flex flex-row justify-between items-center">
-        <p>Disha Genesis</p>
+        <p className="hidden sm:block">Disha Genesis</p>
         <PanelLeftClose className="cursor-pointer" />
       </div>
       <div className="flex-1">
         <div className="flex flex-col gap-2 mt-10">
           <button className="text-start text-sm flex flex-row gap-2 items-center cursor-pointer hover:bg-neutral-800 p-2 px-4 rounded-xl">
             <MessagesSquare size={16} />
-            Let's chat
+            <span className="hidden sm:block">Let's chat</span>
           </button>
           <button className="text-start text-sm flex flex-row gap-2 items-center cursor-pointer hover:bg-neutral-800 p-2 px-4 rounded-xl">
             <Waypoints size={16} />
-            Find right career
+            <span className="hidden sm:block">Find right career</span>
           </button>
           <button className="text-start text-sm flex flex-row gap-2 items-center cursor-pointer hover:bg-neutral-800 p-2 px-4 rounded-xl">
             <TrendingUp size={16} />
-            Trending careers
+            <span className="hidden sm:block">Trending careers</span>
           </button>
         </div>
       </div>
       <div className="p-2 flex flex-row gap-2 items-center cursor-pointer hover:bg-neutral-800 px-4 rounded-xl">
         <CircleUser />
-        <p>Prashant Thakur</p>
+        <p className="hidden sm:block">Prashant Thakur</p>
       </div>
     </div>
   );
