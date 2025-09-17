@@ -49,6 +49,10 @@ const Chat = () => {
   return (
     <div className="w-dvw h-dvh bg-neutral-900 text-white flex justify-center items-center">
       <div className="flex flex-col justify-between h-full w-full md:w-10/12 lg:w-1/2 p-4">
+
+        {/* Title */}
+        <h1 className="text-center text-2xl font-bold">Disha Genesis</h1>
+
         {/* Chat Window */}
         <div
           ref={messagesContainerRef}
