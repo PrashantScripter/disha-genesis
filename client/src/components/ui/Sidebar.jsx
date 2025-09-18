@@ -1,5 +1,11 @@
 import React, { useState } from "react";
-import { CircleUser, MessagesSquare, PanelLeftClose, TrendingUp, Waypoints } from "lucide-react";
+import {
+  CircleUser,
+  MessagesSquare,
+  PanelLeftClose,
+  TrendingUp,
+  Waypoints,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const Sidebar = () => {
@@ -9,12 +15,12 @@ const Sidebar = () => {
   return (
     <div
       className={`bg-neutral-950 h-dvh ${
-        isOpen ? "w-1/6" : "w-16"
-      } p-2 flex flex-col text-white transition-all duration-300`}
+        isOpen ? "w-2/3 lg:w-1/6" : "w-16"
+      } p-2 flex flex-col text-white transition-all duration-300 fixed lg:static z-40`}
     >
       {/* Header */}
       <div className="font-medium text-2xl p-2 flex flex-row justify-between items-center">
-        {isOpen && <p className="hidden sm:block">Disha Genesis</p>}
+        {isOpen && <p>Disha Genesis</p>}
         <PanelLeftClose
           className="cursor-pointer"
           onClick={() => setIsOpen(!isOpen)}
@@ -29,15 +35,15 @@ const Sidebar = () => {
             className="text-start text-sm flex flex-row gap-2 items-center cursor-pointer hover:bg-neutral-800 p-2 px-4 rounded-xl"
           >
             <MessagesSquare size={16} />
-            {isOpen && <span className="hidden sm:block">Let's chat</span>}
+            {isOpen && <span>Let's chat</span>}
           </button>
           <button className="text-start text-sm flex flex-row gap-2 items-center cursor-pointer hover:bg-neutral-800 p-2 px-4 rounded-xl">
             <Waypoints size={16} />
-            {isOpen && <span className="hidden sm:block">Find right career</span>}
+            {isOpen && <span>Find right career</span>}
           </button>
           <button className="text-start text-sm flex flex-row gap-2 items-center cursor-pointer hover:bg-neutral-800 p-2 px-4 rounded-xl">
             <TrendingUp size={16} />
-            {isOpen && <span className="hidden sm:block">Trending careers</span>}
+            {isOpen && <span>Trending careers</span>}
           </button>
         </div>
       </div>
@@ -45,7 +51,7 @@ const Sidebar = () => {
       {/* Footer User */}
       <div className="p-2 flex flex-row gap-2 items-center cursor-pointer hover:bg-neutral-800 px-4 rounded-xl">
         <CircleUser />
-        {isOpen && <p className="hidden sm:block">Prashant Thakur</p>}
+        {isOpen && <p>Prashant Thakur</p>}
       </div>
     </div>
   );
