@@ -12,7 +12,7 @@ const Home = () => {
 
         {/* Card 1 - Student knows their interests */}
         <div
-          onClick={() => navigate("/quiz/interest")}
+          onClick={() => navigate("/chat")}
           className="flex flex-col gap-2 w-80 h-70 bg-neutral-800 rounded-2xl cursor-pointer border border-neutral-800 hover:border-blue-500 transition"
         >
           <div className="w-full h-1/2 overflow-hidden rounded-2xl">

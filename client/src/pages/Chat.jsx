@@ -33,7 +33,7 @@ const Chat = () => {
       );
 
       // Add bot message to chat
-      const botMessage = { sender: "bot", text: res.data.response };
+      const botMessage = { sender: "bot", text: res.data.response.response };
       setMessages((prev) => [...prev, botMessage]);
     } catch (err) {
       console.error(err);
@@ -63,8 +63,8 @@ const Chat = () => {
               key={index}
               className={`py-2 px-4 rounded-2xl max-w-[90%] ${
                 msg.sender === "user"
-                  ? "ml-auto bg-neutral-800 rounded-tr-none"
-                  : "mr-auto  rounded-tl-none"
+                  ? "ml-auto bg-neutral-800 rounded-tr-none whitespace-pre-line"
+                  : "mr-auto  rounded-tl-none whitespace-pre-wrap"
               }`}
             >
               {msg.text}

@@ -9,7 +9,6 @@ export async function Response(req, res) {
             return res.status(400).json({ error: "userInput is required" });
         }
 
-
         const output = await counselorResponse({ userInput });
         res.status(200).json({ response: output });
     } catch (error) {
