@@ -1,4 +1,4 @@
-import { CircleStop, Send } from "lucide-react";
+import { CircleStop, Send, Loader2 } from "lucide-react";
 import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
 
@@ -72,33 +72,40 @@ const Chat = () => {
           ))}
 
           {generating && (
-            <p className="mr-auto text-blue-600 font-bold py-2 px-4 rounded-2xl rounded-tl-none max-w-[70%] animate-pulse">
-              Thinking...
-            </p>
+            <div className="mr-auto text-blue-600 font-bold py-2 px-4 rounded-2xl rounded-tl-none max-w-[70%] flex items-center gap-2">
+              <Loader2 className="animate-spin" size={18} />
+              <span>Thinking...</span>
+            </div>
           )}
         </div>
 
         {/* Input Box */}
-        <div className="flex flex-row bg-neutral-800 rounded-4xl overflow-hidden p-2 h-18 shadow-2xl shadow-neutral-950 border border-neutral-800/80">
+        <div className="flex flex-row items-end bg-neutral-800 rounded-4xl overflow-hidden p-2 shadow-2xl shadow-neutral-950 border border-neutral-800/80">
           <textarea
-            value={userInput}
-            onChange={(e) => setUserInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                if (generating) return;
-                handleSubmit();
-              }
-            }}
-            className="px-4 py-3 resize-none row-end-1 rounded-4xl flex-1 outline-0 bg-neutral-800 text-white"
-            rows={1}
-            placeholder="Type here..."
-          ></textarea>
+  value={userInput}
+  onChange={(e) => setUserInput(e.target.value)}
+  onInput={(e) => {
+    e.target.style.height = "auto"; // reset height
+    e.target.style.height =
+      Math.min(e.target.scrollHeight, 150) + "px"; // grow until max
+  }}
+  onKeyDown={(e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      if (generating) return;
+      handleSubmit();
+    }
+  }}
+  className="px-4 py-3 resize-none rounded-4xl flex-1 outline-0 bg-neutral-800 text-white overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+  rows={1}
+  placeholder="Type here..."
+  style={{ maxHeight: '150px' }}
+></textarea>
 
           <button
             onClick={handleSubmit}
             disabled={generating}
-            className="flex my-auto cursor-pointer bg-neutral-700 hover:bg-neutral-600 transition rounded-full p-3"
+            className="flex flex-shrink-0 items-center justify-center cursor-pointer bg-neutral-700 hover:bg-neutral-600 transition rounded-full p-3 ml-2"
           >
             {generating ? <CircleStop size={18} /> : <Send size={18} />}
           </button>
