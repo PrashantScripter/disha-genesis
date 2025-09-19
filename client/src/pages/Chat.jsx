@@ -63,7 +63,7 @@ const Chat = () => {
               key={index}
               className={`py-2 px-4 rounded-2xl max-w-[90%] ${
                 msg.sender === "user"
-                  ? "ml-auto bg-neutral-800 rounded-tr-none whitespace-pre-line"
+                  ? "ml-auto bg-neutral-800 rounded-tr-none whitespace-pre-wrap"
                   : "mr-auto  rounded-tl-none whitespace-pre-wrap"
               }`}
             >
