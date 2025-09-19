@@ -63,8 +63,13 @@ const Chat = () => {
               key={index}
               className={`py-2 px-4 rounded-2xl max-w-[80%] md:max-w-[70%] break-words overflow-y-auto max-h-60 ${
                 msg.sender === "user"
+<<<<<<< HEAD
                   ? "ml-auto bg-gradient-to-br from-green-800 to-green-600 text-white rounded-tr-none whitespace-pre-line"
                   : "mr-auto bg-gradient-to-br from-gray-700 to-gray-800 text-gray-100 rounded-tl-none whitespace-pre-line"
+=======
+                  ? "ml-auto bg-neutral-800 rounded-tr-none whitespace-pre-wrap"
+                  : "mr-auto  rounded-tl-none whitespace-pre-wrap"
+>>>>>>> 30229a5dcce2a8f25d6463df9147db6d712dd444
               }`}
             >
               {msg.text}
