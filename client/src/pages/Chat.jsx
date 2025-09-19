@@ -46,33 +46,71 @@ const Chat = () => {
     }
   };
 
-  return (
-    <div className="w-dvw h-dvh bg-gradient-to-br from-[#0a1a3f] via-[#11235a] to-[#1b2e70] text-white flex justify-center items-center">
-      <div className="flex flex-col justify-between h-full w-full md:w-10/12 lg:w-1/2 p-4">
+  // Helper to format bot replies
+  const formatBotMessage = (text) => {
+    const lines = text.split("\n").filter((line) => line.trim() !== "");
 
+    return (
+      <div className="space-y-2">
+        {lines.map((line, i) => {
+          if (/^\d+[\.\)]/.test(line.trim())) {
+            // Numbered points
+            return (
+              <p key={i} className="ml-4 text-gray-300">
+                {line.trim()}
+              </p>
+            );
+          } else if (/^[-•*]/.test(line.trim())) {
+            // Bullet points
+            return (
+              <p
+                key={i}
+                className="ml-4 before:content-['•'] before:mr-2 text-gray-300"
+              >
+                {line.replace(/^[-•*]\s*/, "").trim()}
+              </p>
+            );
+          } else {
+            // Normal text
+            return (
+              <p key={i} className="text-gray-200 font-medium">
+                {line.trim()}
+              </p>
+            );
+          }
+        })}
+      </div>
+    );
+  };
+
+  return (
+    <div className="w-dvw h-dvh bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#0f172a] text-white flex justify-center items-center">
+      <div className="flex flex-col justify-between h-full w-full md:w-10/12 lg:w-1/2 p-4">
         {/* Title */}
-        <h1 className="text-center text-2xl font-bold">Disha Genesis</h1>
+        <h1 className="text-center text-3xl font-extrabold tracking-wide text-blue-400 drop-shadow-lg">
+          Disha Genesis
+        </h1>
 
         {/* Chat Window */}
         <div
           ref={messagesContainerRef}
-          className="w-full flex flex-col gap-3 overflow-y-auto [scrollbar-width:none] scroll-smooth [&::-webkit-scrollbar]:hidden flex-1 py-4"
+          className="w-full flex flex-col gap-4 overflow-y-auto [scrollbar-width:none] scroll-smooth [&::-webkit-scrollbar]:hidden flex-1 py-6 px-2"
         >
           {messages.map((msg, index) => (
-  <p
-    key={index}
-    className={`py-2 px-4 rounded-2xl max-w-[80%] md:max-w-[70%] break-words ${
-      msg.sender === "user"
-        ? "ml-auto bg-gradient-to-br from-green-800 to-green-600 text-white rounded-tr-none whitespace-pre-line"
-        : "mr-auto bg-gradient-to-br from-gray-700 to-gray-800 text-gray-100 rounded-tl-none whitespace-pre-line"
-    }`}
-  >
-    {msg.text}
-  </p>
-))}
+            <div
+              key={index}
+              className={`text-sm md:text-base leading-relaxed max-w-[85%] md:max-w-[75%] break-words ${
+                msg.sender === "user"
+                  ? "ml-auto py-3 px-5 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-2xl rounded-tr-none shadow-md"
+                  : "mr-auto bg-transparent px-2"
+              }`}
+            >
+              {msg.sender === "bot" ? formatBotMessage(msg.text) : msg.text}
+            </div>
+          ))}
 
           {generating && (
-            <div className="mr-auto text-blue-300 font-bold py-2 px-4 rounded-2xl rounded-tl-none max-w-[70%] flex items-center gap-2 bg-gradient-to-br from-gray-700 to-gray-800">
+            <div className="mr-auto text-blue-300 italic font-medium py-2 px-4 bg-transparent flex items-center gap-2">
               <Loader2 className="animate-spin" size={18} />
               <span>Thinking...</span>
             </div>
@@ -80,7 +118,7 @@ const Chat = () => {
         </div>
 
         {/* Input Box */}
-        <div className="flex flex-row items-end bg-neutral-800 rounded-4xl overflow-hidden p-2 shadow-2xl shadow-neutral-950 border border-neutral-800/80">
+        <div className="flex flex-row items-end bg-neutral-900 rounded-3xl overflow-hidden p-2 shadow-lg border border-neutral-700">
           <textarea
             value={userInput}
             onChange={(e) => setUserInput(e.target.value)}
@@ -96,18 +134,22 @@ const Chat = () => {
                 handleSubmit();
               }
             }}
-            className="px-4 py-3 resize-none rounded-4xl flex-1 outline-0 bg-neutral-800 text-white overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="px-4 py-3 resize-none flex-1 outline-0 bg-transparent text-white placeholder-gray-400 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             rows={1}
-            placeholder="Type here..."
+            placeholder="Type your message..."
             style={{ maxHeight: "150px" }}
           ></textarea>
 
           <button
             onClick={handleSubmit}
             disabled={generating}
-            className="flex flex-shrink-0 items-center justify-center cursor-pointer bg-gray-600 hover:bg-blue-500 transition rounded-full p-3 ml-2"
+            className="flex flex-shrink-0 items-center justify-center cursor-pointer bg-blue-600 hover:bg-blue-500 transition shadow-md rounded-full p-3 ml-2"
           >
-            {generating ? <CircleStop size={18} /> : <Send size={18} />}
+            {generating ? (
+              <CircleStop size={18} />
+            ) : (
+              <Send size={18} className="text-white" />
+            )}
           </button>
         </div>
       </div>
