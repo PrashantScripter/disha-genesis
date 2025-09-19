@@ -59,17 +59,17 @@ const Chat = () => {
           className="w-full flex flex-col gap-3 overflow-y-auto [scrollbar-width:none] scroll-smooth [&::-webkit-scrollbar]:hidden flex-1 py-4"
         >
           {messages.map((msg, index) => (
-            <p
-              key={index}
-              className={`py-2 px-4 rounded-2xl max-w-[80%] md:max-w-[70%] break-words overflow-y-auto max-h-60 ${
-                msg.sender === "user"
-                  ? "ml-auto bg-gradient-to-br from-green-800 to-green-600 text-white rounded-tr-none whitespace-pre-line"
-                  : "mr-auto bg-gradient-to-br from-gray-700 to-gray-800 text-gray-100 rounded-tl-none whitespace-pre-line"
-              }`}
-            >
-              {msg.text}
-            </p>
-          ))}
+  <p
+    key={index}
+    className={`py-2 px-4 rounded-2xl max-w-[80%] md:max-w-[70%] break-words ${
+      msg.sender === "user"
+        ? "ml-auto bg-gradient-to-br from-green-800 to-green-600 text-white rounded-tr-none whitespace-pre-line"
+        : "mr-auto bg-gradient-to-br from-gray-700 to-gray-800 text-gray-100 rounded-tl-none whitespace-pre-line"
+    }`}
+  >
+    {msg.text}
+  </p>
+))}
 
           {generating && (
             <div className="mr-auto text-blue-300 font-bold py-2 px-4 rounded-2xl rounded-tl-none max-w-[70%] flex items-center gap-2 bg-gradient-to-br from-gray-700 to-gray-800">
