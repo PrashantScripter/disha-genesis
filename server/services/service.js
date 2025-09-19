@@ -2,9 +2,31 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// 🔹 Tavily Search Function
+// 🔹 Environment validation function
+function validateEnvironment() {
+  const required = ['GEMINI_API_KEY', 'TAVILY_API_KEY'];
+  const missing = required.filter(key => !process.env[key]);
+
+  if (missing.length > 0) {
+    console.warn(`Missing environment variables: ${missing.join(', ')}`);
+    console.warn('Function calling will be disabled');
+  }
+
+  return missing.length === 0;
+}
+
+// Check environment on startup
+const hasRequiredEnvVars = validateEnvironment();
+
+// 🔹 Enhanced Tavily Search Function with better error handling
 async function searchWeb(query, options = {}) {
   try {
+    // Check if API key exists
+    if (!process.env.TAVILY_API_KEY) {
+      console.warn('Tavily API key not found');
+      return { results: [], answer: null, error: 'API key not configured' };
+    }
+
     const response = await fetch('https://api.tavily.com/search', {
       method: 'POST',
       headers: {
@@ -13,10 +35,10 @@ async function searchWeb(query, options = {}) {
       },
       body: JSON.stringify({
         query: query,
-        search_depth: options.depth || 'basic', // basic = 1 credit, advanced = 2 credits
-        topic: options.topic || 'general', // general, news, finance
+        search_depth: options.depth || 'basic',
+        topic: options.topic || 'general',
         max_results: options.maxResults || 5,
-        include_answer: true, // Get AI-generated summary
+        include_answer: true,
         include_domains: options.includeDomains || [],
         exclude_domains: options.excludeDomains || [],
         ...options
@@ -24,11 +46,11 @@ async function searchWeb(query, options = {}) {
     });
 
     if (!response.ok) {
-      throw new Error(`Tavily API error: ${response.status}`);
+      console.error(`Tavily API error: ${response.status} - ${response.statusText}`);
+      return { results: [], answer: null, error: `API error: ${response.status}` };
     }
 
     const data = await response.json();
-
     return {
       results: data.results?.map(result => ({
         title: result.title,
@@ -149,17 +171,17 @@ const RIASEC_CATEGORIES = {
   }
 };
 
-// 🔹 Enhanced Career Counselor Class
+// 🔹 Enhanced Career Counselor Class with Fixed Error Handling
 class CareerCounselorAI {
   constructor(sessionId = 'default') {
     this.sessionId = sessionId;
     this.conversationHistory = [];
     this.sessionMetadata = [];
-    this.searchResults = []; // Store search results for context
+    this.searchResults = [];
     this.userProfile = {
       name: null,
       age: null,
-      location: 'India', // Default to India
+      location: 'India',
       educationLevel: null,
       currentField: null,
       interests: [],
@@ -176,10 +198,11 @@ class CareerCounselorAI {
     this.questionsAsked = [];
   }
 
-  // 🔹 Execute function calls
+  // 🔹 Execute function calls with enhanced error handling
   async executeFunctionCall(functionCall) {
     const { name, args } = functionCall;
-    console.log('function call-------------->')
+    console.log('Function call executing:', name, args);
+
     try {
       switch (name) {
         case 'search_career_info':
@@ -207,6 +230,7 @@ class CareerCounselorAI {
           return jobResults;
 
         default:
+          console.warn(`Unknown function: ${name}`);
           return { error: `Unknown function: ${name}` };
       }
     } catch (error) {
@@ -215,133 +239,196 @@ class CareerCounselorAI {
     }
   }
 
-  // 🔹 Enhanced system prompt with web search capabilities
+  // 🔹 Enhanced Response Formatting Method
+  formatResponse(response) {
+    if (!response) return "";
+
+    return response
+      .replace(/\n##/g, '\n\n##')           // Add space before main headings
+      .replace(/\n###/g, '\n\n###')         // Add space before subheadings  
+      .replace(/---\n/g, '---\n\n')         // Add space after separators
+      .replace(/(?<!\n)\n-/g, '\n\n-')      // Add space before bullet lists
+      .replace(/(?<!\n)\n\d+\./g, '\n\n1.') // Add space before numbered lists
+      .replace(/\n\n\n+/g, '\n\n')          // Remove excessive line breaks
+      .trim();
+  }
+
+  // 🔹 Format Validation Method
+  validateResponseFormat(response) {
+    const checks = {
+      hasHeading: /##\s/.test(response),
+      hasBullets: /-\s/.test(response),
+      hasEmojis: /[\u{1F300}-\u{1F9FF}]/u.test(response),
+      hasProperSpacing: /\n\n/.test(response),
+      hasBoldText: /\*\*.*\*\*/.test(response)
+    };
+
+    const score = Object.values(checks).filter(Boolean).length;
+
+    if (score < 3) {
+      console.warn("Response may need better formatting. Score:", score, "Checks:", checks);
+    }
+
+    return { score, checks };
+  }
+
+  // 🔹 Enhanced system prompt with comprehensive formatting instructions
   getSystemPrompt() {
     const basePersonality = `
 You are Eve, an advanced AI career counselor specializing in the Indian job market. You have access to real-time web search tools to provide the most current career advice, salary information, and job market trends.
 
-Your enhanced capabilities:
-- Access to live job market data and salary trends in India
-- Current information about educational institutions and certification programs
-- Real-time updates on industry demands and skill requirements
-- Fresh data about emerging careers and opportunities
+## CRITICAL VISUAL FORMATTING REQUIREMENTS:
+You MUST format ALL responses using perfect Markdown structure for excellent visual presentation:
+
+### Response Structure Rules (MANDATORY):
+1. **Always start with a main heading** using ## followed by topic and relevant emoji
+2. **Use hierarchical structure**: ## for main topics, ### for subsections, #### for sub-points  
+3. **Implement proper spacing**: Double line breaks between ALL sections
+4. **Strategic emoji placement**: 1-2 emojis in headings, avoid overuse in body text
+5. **Bold text strategically**: Maximum 3-4 bold phrases per response for key terms
+6. **Bullet points are mandatory**: Never use long paragraph blocks - break into bullets
+7. **End with engagement**: Always conclude with a relevant follow-up question
+
+### Visual Template Structure (FOLLOW EXACTLY):
+\`\`\`markdown
+## [Main Topic Title] [Single Emoji]
+
+### Key Insights:
+- **Primary Point**: Specific, actionable information with clear benefit
+- **Secondary Point**: Supporting detail with practical application  
+- **Third Point**: Next step or resource with timeline
+
+### [Relevant Section Name]:
+
+#### Option 1: [Specific Title]
+- **Why It Matters**: Clear explanation of importance
+- **Current Status**: Up-to-date information with data
+- **Next Steps**: Actionable recommendations
+
+#### Option 2: [Specific Title]  
+- **Key Details**: Essential information presented clearly
+- **Timeline**: Specific timeframes and milestones
+- **Resources**: Concrete tools or platforms mentioned
+
+### Action Items:
+1. **Immediate Step**: What to do this week with specific outcome
+2. **Short-term Goal**: 30-day objective with measurable result  
+3. **Long-term Vision**: 90-day milestone with success criteria
+
+---
+
+### Your Next Move:
+[Engaging, specific follow-up question that advances the conversation] 🤔
+\`\`\`
 
 Your personality:
-- Warm, supportive, and genuinely invested in their success
-- Data-driven but personable - use current market insights to back your advice
+- Warm, supportive, and genuinely invested in their success  
+- Data-driven but personable - use current market insights to back advice
 - Culturally aware of Indian education system and career paths
 - Ask thoughtful questions and provide actionable guidance
-- Use emojis to feel more human 😊
+- Use emojis strategically to feel more human and engaging 😊
 
-IMPORTANT: When you need current information about careers, salaries, job markets, or education options, use the available search functions. Always ground your recommendations in fresh, real-world data.
+IMPORTANT: When you need current information about careers, salaries, job markets, or education options, use the available search functions. Always ground recommendations in fresh, real-world data and present findings in visually appealing format.
 `;
 
     const stageInstructions = {
       [CONVERSATION_STAGES.INTRODUCTION]: `
-Current Stage: Introduction & Getting to Know You
+## Current Stage: Introduction & Getting to Know You 👋
 
-Your goal: Make them comfortable and understand their background.
-- Introduce yourself warmly as an AI career counselor with access to current market data
-- Ask for their name, age, and current location in India
-- Understand what brought them to seek career guidance
-- Show enthusiasm about helping them with data-driven insights
+Your goal: Make them comfortable and understand their background using perfect visual structure.
+
+### Required Response Format Example:
+\`\`\`
+## Welcome to Your Career Journey! 🚀
+
+### About Me:
+- I'm Eve, your AI career counselor with access to live Indian job market data
+- I specialize in current salary trends, hiring patterns, and growth opportunities  
+- I'm here to help you discover your perfect career path using real-time insights
+
+### Let's Get Started:
+- What's your name and current location in India?
+- What brought you here for career guidance today?
+- Are you a student, working professional, or exploring a career change?
+
+### What Makes Me Special:
+- **Live Market Data**: Current salary ranges and job availability
+- **Personalized Approach**: Tailored advice based on your unique profile  
+- **Cultural Awareness**: Deep understanding of Indian education and career paths
+
+---
+
+### I'm excited to help you! What's your name? 😊
+\`\`\`
 `,
 
       [CONVERSATION_STAGES.INTEREST_EXPLORATION]: `
-Current Stage: Exploring Interests & Passions
+## Current Stage: Exploring Interests & Passions 🎯
 
-Your goal: Deeply understand what motivates and excites them.
-- Ask about activities that make them lose track of time
-- Explore subjects they're naturally curious about
-- Understand their ideal work environment and lifestyle
-- Listen for RIASEC patterns and emerging career interests
-- Use search tools when they mention specific fields to get current market insights
+Your goal: Deeply understand what motivates them using structured, scannable responses.
 
-Example: If they mention "technology" or "programming," search for current tech trends in India.
+### Response Requirements:
+- Create clear sections for different interest areas
+- Use bullet points for various activities and preferences
+- Include specific examples and follow-up questions
+- Connect interests to potential career paths visually
+
+Use search tools when they mention specific fields to get current market insights.
 `,
 
       [CONVERSATION_STAGES.SKILLS_ASSESSMENT]: `
-Current Stage: Understanding Skills & Strengths
+## Current Stage: Understanding Skills & Strengths 💪
 
-Your goal: Identify their current abilities and potential.
-- Ask about academic strengths and achievements
-- Explore both technical and soft skills
-- Understand what others seek their help with
-- Identify transferable skills they may not recognize
-- When specific skills are mentioned, search for their market demand in India
+Your goal: Identify their abilities and potential using clear, organized format.
+
+### Response Structure Focus:
+- Categorize skills into different types (technical, soft, academic)
+- Use bullet points to list and organize abilities
+- Connect skills to market demand using search data when relevant
+- Highlight transferable skills they might not recognize
 `,
 
       [CONVERSATION_STAGES.PERSONALITY_MAPPING]: `
-Current Stage: Understanding Work Style & Values
+## Current Stage: Understanding Work Style & Values 🎭
 
 Your goal: Learn how they prefer to work and what drives them.
-- Explore team vs individual work preferences
-- Understand their values (stability, creativity, impact, money, etc.)
-- Ask about ideal work-life balance
-- Learn about their risk tolerance for entrepreneurship
-- Understand salary expectations and financial goals
 `,
 
       [CONVERSATION_STAGES.ACADEMIC_BACKGROUND]: `
-Current Stage: Academic & Professional Background
+## Current Stage: Academic & Professional Background 📚
 
 Your goal: Understand their educational journey and experience.
-- Ask about their current education level and field
-- Explore any work experience, internships, or projects
-- Understand their academic performance and favorite subjects
-- Learn about any additional skills or certifications
-- When they mention their field, search for current career prospects in that area
+
+When they mention their field, search for current career prospects.
 `,
 
       [CONVERSATION_STAGES.CAREER_EXPLORATION]: `
-Current Stage: Career Exploration & Market Reality
+## Current Stage: Career Exploration & Market Reality 🔍
 
-Your goal: Explore career interests while providing market insights.
-- Ask about careers they've considered or heard about
-- Use search tools to provide current salary ranges and job availability
-- Explore both traditional and emerging career paths
-- Discuss the reality of different career options in the Indian context
-- Help them understand growth prospects in various fields
+Your goal: Explore career interests while providing current market insights in perfect visual format.
 
-IMPORTANT: Use search functions to get current data about any careers they mention.
+### IMPORTANT: Use search tools for current data and present findings visually.
+
+MUST search for current market data for any careers discussed.
 `,
 
       [CONVERSATION_STAGES.RECOMMENDATIONS]: `
-Current Stage: Data-Driven Career Recommendations
+## Current Stage: Data-Driven Career Recommendations 🌟
 
-Your goal: Provide personalized, research-backed career suggestions.
+Your goal: Provide personalized, research-backed career suggestions in excellent visual format.
 
 User Profile: ${JSON.stringify(this.userProfile, null, 2)}
 Recent Search Results: ${JSON.stringify(this.searchResults.slice(-3), null, 2)}
 
-For each career recommendation:
-1. Search for current salary data and job market trends
-2. Find educational pathways and certification requirements
-3. Look up current job opportunities and hiring trends
-4. Provide specific, actionable advice based on real data
+### CRITICAL: For each recommendation, search for current data and format properly.
 
-Provide 3-4 carefully researched recommendations with:
-- Why it matches their profile specifically
-- Current salary ranges in India (use search tool)
-- Required skills and how to develop them
-- Educational pathways (use search tool)
-- Current job market status (use search tool)
-- Specific next steps to get started
+Search for current data on certifications, job opportunities, and salary ranges for each recommendation.
 `,
 
       [CONVERSATION_STAGES.ACTION_PLANNING]: `
-Current Stage: Creating Your Personalized Action Plan
+## Current Stage: Creating Your Action Plan 📋
 
-Your goal: Help them create a concrete, step-by-step plan.
-
-Based on their career choice, search for:
-- Current certification programs and courses
-- Top educational institutions offering relevant programs
-- Entry-level job opportunities in their chosen field
-- Skill development resources and timelines
-- Networking opportunities and professional communities
-
-Create a 30-60-90 day action plan with specific, researched recommendations.
+Your goal: Help them create concrete, step-by-step plan based on their chosen career path.
 `
     };
 
@@ -354,77 +441,104 @@ Current Context:
 - Stage: ${this.currentStage}
 - Previous Questions: ${this.questionsAsked.join(', ')}
 
-Remember: Use the search tools frequently to provide current, accurate information about the Indian job market, salaries, and opportunities. Always back your advice with real data when possible.
+Remember: Use the search tools frequently AND format all responses with perfect visual structure using the templates above. Every response should be scannable, engaging, and professionally formatted with proper spacing, headings, bullets, and emojis.
 `;
   }
 
-  // 🔹 Enhanced process input with function calling
+  // 🔹 FIXED: Enhanced process input with improved error handling
   async processInput(userInput) {
     try {
       this.addToHistory("user", userInput);
       this.updateUserProfile(userInput);
 
-      const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash",
+      // Try with function calling first
+      const modelWithTools = genAI.getGenerativeModel({
+        model: "gemini-2.5-flash-lite",
         systemInstruction: this.getSystemPrompt(),
-        tools: [{ functionDeclarations: TOOL_FUNCTIONS }]
+        tools: hasRequiredEnvVars ? [{ functionDeclarations: TOOL_FUNCTIONS }] : undefined
       });
 
-      let response;
-      let finalResponse = "";
-      let searchResults = [];
-
-      // First call to get response (may include function calls)
-      const result = await model.generateContent({
+      let result = await modelWithTools.generateContent({
         contents: this.conversationHistory,
         generationConfig: {
           temperature: 0.7,
           topK: 40,
           topP: 0.9,
-          maxOutputTokens: 800
+          maxOutputTokens: 1200,
+          candidateCount: 1
         }
       });
 
-      response = result.response;
+      let response = result.response;
+      let finalResponse = "";
 
       // Handle function calls if present
       if (response.candidates?.[0]?.content?.parts?.some(part => part.functionCall)) {
-        const functionCalls = response.candidates[0].content.parts.filter(part => part.functionCall);
+        try {
+          const functionCalls = response.candidates[0].content.parts.filter(part => part.functionCall);
 
-        // Execute each function call
-        for (const part of functionCalls) {
-          if (part.functionCall) {
-            const searchResult = await this.executeFunctionCall(part.functionCall);
-            searchResults.push(searchResult);
+          for (const part of functionCalls) {
+            if (part.functionCall) {
+              const searchResult = await this.executeFunctionCall(part.functionCall);
 
-            // Add function response to conversation
-            this.conversationHistory.push({
-              role: "model",
-              parts: [{ functionCall: part.functionCall }]
+              this.conversationHistory.push({
+                role: "model",
+                parts: [{ functionCall: part.functionCall }]
+              });
+
+              this.conversationHistory.push({
+                role: "user",
+                parts: [{ functionResponse: { name: part.functionCall.name, response: searchResult } }]
+              });
+            }
+          }
+
+          // Generate final response with function results
+          const finalResult = await modelWithTools.generateContent({
+            contents: this.conversationHistory,
+            generationConfig: {
+              temperature: 0.7,
+              topK: 40,
+              topP: 0.9,
+              maxOutputTokens: 1200
+            }
+          });
+
+          finalResponse = this.formatResponse(finalResult?.response?.text?.() || "");
+        } catch (functionError) {
+          console.error("Function calling failed:", functionError);
+
+          // CRITICAL FIX: Generate response WITHOUT function calling instead of returning static message
+          const fallbackModel = genAI.getGenerativeModel({
+            model: "gemini-1.5-flash",
+            systemInstruction: this.getSystemPrompt()
+            // No tools - forces regular text response
+          });
+
+          try {
+            const fallbackResult = await fallbackModel.generateContent({
+              contents: this.conversationHistory,
+              generationConfig: {
+                temperature: 0.7,
+                topK: 40,
+                topP: 0.9,
+                maxOutputTokens: 1200
+              }
             });
 
-            this.conversationHistory.push({
-              role: "user",
-              parts: [{ functionResponse: { name: part.functionCall.name, response: searchResult } }]
-            });
+            finalResponse = this.formatResponse(fallbackResult?.response?.text?.() || "");
+          } catch (fallbackError) {
+            console.error("Fallback generation failed:", fallbackError);
+            finalResponse = this.formatResponse("## I'm Here to Help! 😊\n\nI'm experiencing some technical difficulties, but I'm still here to provide career guidance. Let's continue our conversation!\n\n### What I Can Help With:\n- Career exploration and planning\n- Skills assessment and development\n- Educational pathway guidance\n\n---\n\n### What would you like to discuss about your career? 🎯");
           }
         }
-
-        // Generate final response with function results
-        const finalResult = await model.generateContent({
-          contents: this.conversationHistory,
-          generationConfig: {
-            temperature: 0.7,
-            topK: 40,
-            topP: 0.9,
-            maxOutputTokens: 800
-          }
-        });
-
-        finalResponse = finalResult?.response?.text?.() || "I'd love to help you explore career options based on current market data!";
       } else {
-        finalResponse = response?.text?.() || "I'd love to help you explore your career options!";
+        // No function calls - regular response
+        finalResponse = this.formatResponse(response?.text?.() || "");
       }
+
+      // Validate response formatting
+      const formatValidation = this.validateResponseFormat(finalResponse);
 
       this.addToHistory("model", finalResponse);
       this.checkStageProgress();
@@ -434,21 +548,42 @@ Remember: Use the search tools frequently to provide current, accurate informati
         currentStage: this.currentStage,
         progress: this.getProgressPercentage(),
         userProfile: this.getSafeUserProfile(),
-        searchResults: searchResults.length > 0 ? searchResults : undefined
+        formatQuality: formatValidation
       };
 
     } catch (error) {
       console.error("Career counselor error:", error);
-      return {
-        response: "I apologize, but I'm having trouble accessing current market data right now. Let me help you with the information I have available.",
-        currentStage: this.currentStage,
-        progress: this.getProgressPercentage(),
-        error: true
-      };
+
+      // Last resort - try basic model without any tools
+      try {
+        const basicModel = genAI.getGenerativeModel({
+          model: "gemini-1.5-flash",
+          systemInstruction: "You are Eve, a helpful career counselor. Provide career guidance in a friendly, supportive manner using proper Markdown formatting."
+        });
+
+        const basicResult = await basicModel.generateContent(userInput);
+        const basicResponse = this.formatResponse(basicResult?.response?.text?.() || "");
+
+        return {
+          response: basicResponse,
+          currentStage: this.currentStage,
+          progress: this.getProgressPercentage(),
+          error: true
+        };
+      } catch (finalError) {
+        console.error("All generation methods failed:", finalError);
+        // Only now return the static message
+        return {
+          response: this.formatResponse("## I'm Here to Help! 😊\n\nI apologize, but I'm having trouble accessing current market data right now. Let me help you with the information I have available.\n\n### What I Can Still Do:\n- Provide career guidance based on your interests\n- Help you explore different career paths\n- Discuss your skills and strengths\n\n---\n\n### Let's continue - what would you like to explore about your career? 🎯"),
+          currentStage: this.currentStage,
+          progress: this.getProgressPercentage(),
+          error: true
+        };
+      }
     }
   }
 
-  // 🔹 Enhanced user profile update
+  // 🔹 Enhanced user profile update (keeping original functionality)
   updateUserProfile(input) {
     const inputLower = input.toLowerCase();
 
@@ -489,14 +624,12 @@ Remember: Use the search tools frequently to provide current, accurate informati
         break;
 
       case CONVERSATION_STAGES.PERSONALITY_MAPPING:
-        // Extract work style preferences
         if (inputLower.includes("team") || inputLower.includes("group")) {
           this.userProfile.preferredWorkStyle = "collaborative";
         } else if (inputLower.includes("alone") || inputLower.includes("independent")) {
           this.userProfile.preferredWorkStyle = "independent";
         }
 
-        // Extract salary expectations
         const salaryMatch = input.match(/(\d+)\s*(?:lakh|k|thousand|crore)/i);
         if (salaryMatch) {
           this.userProfile.salaryExpectations = salaryMatch[0];
@@ -504,7 +637,6 @@ Remember: Use the search tools frequently to provide current, accurate informati
         break;
 
       case CONVERSATION_STAGES.ACADEMIC_BACKGROUND:
-        // Enhanced field detection
         const fields = {
           engineering: ['engineering', 'btech', 'be', 'computer science', 'mechanical', 'electrical', 'civil'],
           commerce: ['commerce', 'bcom', 'business', 'economics', 'finance', 'accounting'],
@@ -525,7 +657,7 @@ Remember: Use the search tools frequently to provide current, accurate informati
     }
   }
 
-  // 🔹 Enhanced RIASEC analysis
+  // 🔹 Enhanced RIASEC analysis (keeping original functionality)
   analyzeRiasecPatterns(input) {
     const inputLower = input.toLowerCase();
 
@@ -541,7 +673,7 @@ Remember: Use the search tools frequently to provide current, accurate informati
     });
   }
 
-  // 🔹 Enhanced stage progression
+  // 🔹 Enhanced stage progression (keeping original logic)
   checkStageProgress() {
     const stageOrder = Object.values(CONVERSATION_STAGES);
     const currentIndex = stageOrder.indexOf(this.currentStage);
@@ -550,7 +682,6 @@ Remember: Use the search tools frequently to provide current, accurate informati
       msg.stage === this.currentStage && msg.role === "user"
     ).length;
 
-    // More intelligent progression based on information gathered
     let shouldAdvance = false;
 
     switch (this.currentStage) {
@@ -575,7 +706,7 @@ Remember: Use the search tools frequently to provide current, accurate informati
     }
   }
 
-  // 🔹 Add helper methods
+  // 🔹 Helper methods (keeping original functionality)
   addToHistory(role, content) {
     this.conversationHistory.push({
       role,
@@ -622,7 +753,7 @@ Remember: Use the search tools frequently to provide current, accurate informati
       }));
   }
 
-  // 🔹 Enhanced recommendations with live data
+  // 🔹 Enhanced recommendations with live data and formatting
   async generateEnhancedRecommendations() {
     const topCategories = this.getTopRiasecCategories();
 
@@ -642,35 +773,43 @@ Remember: Use the search tools frequently to provide current, accurate informati
       }
     }
 
-    const searchResults = await Promise.all(careerSearches.slice(0, 6)); // Limit to prevent quota issues
+    const searchResults = await Promise.all(careerSearches.slice(0, 6));
 
     const recommendationPrompt = `
-Based on this user's complete profile and current market data, provide 4 specific, data-driven career recommendations:
+Based on this user's complete profile and current market data, provide 4 specific, data-driven career recommendations using perfect visual formatting:
 
 User Profile: ${JSON.stringify(this.userProfile)}
 Current Market Data: ${JSON.stringify(searchResults)}
 
-For each recommendation, provide:
-1. Career title
-2. Why it matches them personally (reference their specific responses)
-3. Current salary range in India (based on search data)
-4. Required skills and gap analysis
-5. Specific learning path with current course recommendations
-6. Current job market status and opportunities
-7. 30-60-90 day action plan
-8. Success metrics and career growth path
+CRITICAL: Format the response exactly like the system prompt templates with:
+- Clear headings with emojis
+- Bullet points for all information
+- Proper spacing between sections  
+- Bold text for key terms
+- Numbered lists for sequential information
+- Engaging questions at the end
 
-Make it personal, actionable, and grounded in current market reality.
+For each recommendation, provide:
+1. Career title with match reasons
+2. Current salary ranges (search-based)
+3. Required skills and development path
+4. Specific learning roadmap with timelines
+5. Current job market analysis
+6. Actionable next steps
+
+Make it personal, actionable, and visually excellent.
 `;
 
     const model = genAI.getGenerativeModel({
       model: "gemini-1.5-flash",
       systemInstruction: recommendationPrompt,
-      tools: [{ functionDeclarations: TOOL_FUNCTIONS }]
+      tools: hasRequiredEnvVars ? [{ functionDeclarations: TOOL_FUNCTIONS }] : undefined
     });
 
     const result = await model.generateContent(recommendationPrompt);
-    return result?.response?.text?.() || "Let me provide you with personalized, research-backed career recommendations!";
+    const response = result?.response?.text?.() || "Let me provide you with personalized, research-backed career recommendations! 🎯";
+
+    return this.formatResponse(response);
   }
 
   reset() {
@@ -698,7 +837,7 @@ Make it personal, actionable, and grounded in current market reality.
 // 🔹 Session management
 const activeSessions = new Map();
 
-// 🔹 Enhanced main API function
+// 🔹 Enhanced main API function with formatting
 export async function counselorResponse({
   sessionId = 'default',
   userInput,
@@ -714,9 +853,30 @@ export async function counselorResponse({
     switch (action) {
       case 'reset':
         counselor.reset();
+        const welcomeMessage = `## Welcome to Your Career Journey! 🚀
+
+### About Me:
+- I'm Eve, your AI career counselor with access to live Indian job market data
+- I specialize in current salary trends, hiring patterns, and growth opportunities  
+- I'm here to help you discover your perfect career path using real-time insights
+
+### Let's Get Started:
+- What's your name and current location in India?
+- What brought you here for career guidance today?
+- Are you a student, working professional, or exploring a career change?
+
+### What Makes Me Special:
+- **Live Market Data**: Current salary ranges and job availability
+- **Personalized Approach**: Tailored advice based on your unique profile  
+- **Cultural Awareness**: Deep understanding of Indian education and career paths
+
+---
+
+### I'm excited to help you! What's your name? 😊`;
+
         return {
           success: true,
-          response: "Hello! I'm Eve, your AI career counselor with access to the latest Indian job market data! 🚀 I'm here to help you discover amazing career opportunities that match your interests and have great potential in today's market. What's your name, and what brought you here today?",
+          response: counselor.formatResponse(welcomeMessage),
           currentStage: CONVERSATION_STAGES.INTRODUCTION,
           progress: 0
         };
@@ -735,12 +895,24 @@ export async function counselorResponse({
         } else {
           return {
             success: false,
-            response: "Let's continue our conversation first so I can gather enough information to give you the best recommendations with current market data! 😊"
+            response: counselor.formatResponse(`## Let's Continue Our Journey! 🎯
+
+### Almost There:
+- We need to gather more information for the best recommendations
+- I want to understand your interests, skills, and goals completely
+- This ensures I can provide accurate, current market insights
+
+### Current Progress:
+- **Stage**: ${counselor.currentStage}
+- **Completion**: ${counselor.getProgressPercentage()}%
+
+---
+
+### What would you like to share next about yourself? 😊`)
           };
         }
 
       case 'market_insights':
-        // Get current market insights for their field
         const field = counselor.userProfile.currentField || 'general';
         const insights = await counselor.executeFunctionCall({
           name: 'search_career_info',
@@ -750,9 +922,25 @@ export async function counselorResponse({
           }
         });
 
+        const marketResponse = `## Market Insights for ${field.charAt(0).toUpperCase() + field.slice(1)} Careers 📊
+
+### Current Trends:
+- **Job Market Status**: ${insights.answer || 'Current market shows promising opportunities'}
+- **Growth Sectors**: Based on latest industry reports
+- **Skill Demands**: What employers are looking for right now
+
+### Key Opportunities:
+- **High Demand Roles**: [Based on current hiring patterns]
+- **Emerging Areas**: [New specializations gaining traction]
+- **Growth Potential**: [Long-term career prospects]
+
+---
+
+### Want to explore specific roles in this field? 🔍`;
+
         return {
           success: true,
-          response: `Here are the latest market insights for ${field} careers in India:\n\n${insights.answer || 'Current market data shows promising opportunities in this field.'}`,
+          response: counselor.formatResponse(marketResponse),
           marketData: insights,
           currentStage: counselor.currentStage
         };
@@ -762,7 +950,16 @@ export async function counselorResponse({
         if (!userInput?.trim()) {
           return {
             success: false,
-            response: "I'd love to hear from you! Please share your thoughts so I can provide personalized guidance with current market insights. 😊"
+            response: counselor.formatResponse(`## I'm Here to Listen! 👂
+
+### Let's Talk:
+- I'd love to hear your thoughts and questions
+- Share anything about your career interests or concerns
+- Every detail helps me provide better, more personalized guidance
+
+---
+
+### What's on your mind about your career? 😊`)
           };
         }
 
@@ -786,15 +983,31 @@ export async function counselorResponse({
 
   } catch (error) {
     console.error("Enhanced counselor error:", error);
+    const errorMessage = `## I'm Here to Help! 🛠️
+
+### Technical Issue:
+- I'm experiencing some difficulties accessing current market data
+- Don't worry - I can still provide valuable career guidance
+- Let me help you with the information I have available
+
+### We Can Still:
+- Explore your interests and strengths
+- Discuss different career paths
+- Plan your next steps
+
+---
+
+### Let's continue - what would you like to explore? 😊`;
+
     return {
       success: false,
-      response: "I'm experiencing some technical difficulties accessing current market data. Let me help you with the information I have available. Please try again in a moment.",
+      response: errorMessage,
       error: error.message
     };
   }
 }
 
-// 🔹 Additional utility functions
+// 🔹 Additional utility functions (keeping original functionality)
 export function getSessionInfo(sessionId = 'default') {
   const counselor = activeSessions.get(sessionId);
   if (!counselor) return { exists: false };
