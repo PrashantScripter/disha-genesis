@@ -162,7 +162,7 @@ const Chat = () => {
   return (
     <div className="w-dvw h-dvh bg-neutral-900 text-white flex justify-center items-center">
       <div className="flex flex-col justify-between h-full w-full md:w-10/12 lg:w-2/3 xl:w-1/2 p-4">
-        <h1 className="text-center text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+        <h1 className="pb-2 text-center text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
           Disha Genesis
         </h1>
 
