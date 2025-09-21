@@ -22,35 +22,15 @@ const Home = () => {
               className="w-full h-full"
             />
           </div>
-          <div className="px-2 py-1 text-lg font-bold">I know about my interests</div>
+          <div className="px-2 py-1 text-lg font-bold">Find you perfect career</div>
           <div className="px-2 py-1 text-sm">
             <p>
-              Choose your field (Law, Tech, Business) and play quizzes
-              according to your level (Beginner → Advanced).
+              Talk to our AI career counsellor and get personalized guidance for your future.
             </p>
           </div>
         </div>
 
-        {/* Card 2 - Student doesn’t know their interests */}
-        <div
-          onClick={() => navigate("/quiz/mixed")}
-          className="flex flex-col gap-2 w-80 h-70 bg-neutral-800 rounded-2xl cursor-pointer border border-neutral-800 hover:border-green-500 transition"
-        >
-          <div className="w-full h-1/2 overflow-hidden rounded-2xl">
-            <img
-              src="https://bcdn.mindler.com/bloglive/wp-content/uploads/2022/10/19131552/blog-161-770x385.png"
-              alt="Discover Interests"
-              className="w-full h-full"
-            />
-          </div>
-          <div className="px-2 py-1 text-lg font-bold">I don’t know about my interests</div>
-          <div className="px-2 py-1 text-sm">
-            <p>
-              Get a mix of quizzes from Law, Tech, and Business to discover
-              where your interest lies.
-            </p>
-          </div>
-        </div>
+        
       </div>
     </div>
   );

@@ -2,10 +2,16 @@ import "dotenv/config";
 import express from 'express'
 import cors from 'cors'
 import bodyParser from 'body-parser';
-import counselorRoutes from './routes/counselorRoutes.js' 
+import counselorRoutes from './routes/counselorRoutes.js'
+const corsOptions = {
+    origin: [
+        process.env.CLIENT_URL,
+    ],
+    credentials: true,
+};
 
 const app = express();
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
 const PORT = process.env.PORT || 3000;
