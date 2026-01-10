@@ -5,7 +5,7 @@ import bodyParser from 'body-parser';
 import counselorRoutes from './routes/counselorRoutes.js'
 const corsOptions = {
     origin: [
-        process.env.CLIENT_URL,
+        process.env.CLIENT_URL || 'http://localhost:5173',
     ],
     credentials: true,
 };

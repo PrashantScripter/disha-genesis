@@ -1,5 +1,5 @@
 import React from "react";
-import Sidebar from "../components/ui/Sidebar";
+// import Sidebar from "../components/ui/Sidebar";
 import { useNavigate } from "react-router-dom";
 import { TrendingUp, Waypoints } from "lucide-react";
 
@@ -8,7 +8,7 @@ const Home = () => {
 
   return (
     <div className="bg-neutral-900 min-h-screen w-full flex flex-row text-white overflow-hidden">
-      <Sidebar />
+      {/* <Sidebar /> */}
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-h-screen">
